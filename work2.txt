@@ -1,0 +1,161 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    FLASK CRUD REST API - ПОЛНОЕ ОБЪЯСНЕНИЕ ДЛЯ ПРАКТИКИ
+═══════════════════════════════════════════════════════════════════════════════
+
+НАЗНАЧЕНИЕ ПРОГРАММЫ
+════════════════════
+Flask REST API сервер для интернет-магазина с полным CRUD функционалом:
+- CREATE (POST) - создать товар
+- READ (GET)   - получить товары (список/один)
+- UPDATE (PUT) - обновить товар  
+- DELETE (DEL) - удалить товар
+
+АРХИТЕКТУРА СИСТЕМЫ
+═══════════════════
+Клиент (Postman/Браузер) ↔ HTTP-запросы ↔ Flask API ↔ SQLite (shopp.db)
+
+## ОСНОВНЫЕ КОМПОНЕНТЫ КОДА
+
+1. ИМПОРТЫ
+==========
+from flask import Flask, jsonify, request    # Веб-фреймворк
+import sqlite3                              # База данных
+import os                                   # Файловая система
+
+2. КОНФИГУРАЦИЯ
+===============
+app = Flask(__name__)
+DB_PATH = 'shopp.db'  # Создается в текущей папке
+
+## ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            description TEXT,
+            price REAL NOT NULL CHECK(price > 0),
+            stock_quantity INTEGER DEFAULT 0
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+    
+# Автозапуск при старте Flask
+with app.app_context():
+    init_db()
+
+## ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ПОДКЛЮЧЕНИЯ
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row  # ← ВАЖНО: возвращает словари вместо кортежей
+    return conn
+
+## 5 API ENDPOINTS (МАРШРУТОВ)
+
+### 1. СОЗДАТЬ ТОВАР (POST /api/products)
+```Invoke-RestMethod -Uri "http://localhost:5000/api/products" -Method POST -ContentType "application/json" -Body '{"name":"MacBook","price":150000,"stock_quantity":5}'
+
+2. СПИСОК ТОВАРОВ (GET /api/products)
+text
+GET http://localhost:5000/api/products
+ОТВЕТ:
+
+json
+[
+  {"id":1,"name":"iPhone 15","price":50000,"stock_quantity":10},
+  {"id":2,"name":"Футболка","price":1000,"stock_quantity":50}
+]
+3. ОДИН ТОВАР (GET /api/products/1)
+text
+GET http://localhost:5000/api/products/1
+ОТВЕТ: {"id":1,"name":"iPhone 15",...} или 404
+
+4. ОБНОВИТЬ ТОВАР (PUT /api/products/1)
+json
+PUT http://localhost:5000/api/products/1
+{"name":"iPhone 15 Pro","price":60000}
+ПРОВЕРКА: cursor.rowcount == 0 → товар не найден (404)
+
+5. УДАЛИТЬ ТОВАР (DELETE /api/products/1)
+text
+DELETE http://localhost:5000/api/products/1
+ОТВЕТ: {"message":"Товар удален"} или 404
+
+ТЕХНИЧЕСКИЕ ХАРАКТЕРИСТИКИ
+✅ БЕЗОПАСНОЕ ПОДКЛЮЧЕНИЕ
+
+conn.row_factory = sqlite3.Row → словари вместо кортежей
+
+conn.close() в каждом endpoint
+
+Параметризованные запросы (? вместо строк)
+
+✅ СТРОГАЯ ВАЛИДАЦИЯ
+if not data.get('name') or data.get('price') <= 0:
+return jsonify({'error': '... '}), 400
+
+✅ HTTP СТАТУС-КОДЫ
+
+201 Created (создание)
+
+400 Bad Request (валидация)
+
+404 Not Found (не существует)
+
+✅ CHECK ОГРАНИЧЕНИЯ В БД
+price REAL NOT NULL CHECK(price > 0)
+
+✅ ИДЕМПОТЕНЦИАЛЬНОСТЬ
+CREATE TABLE IF NOT EXISTS = безопасный перезапуск
+
+СТРУКТУРА БАЗЫ ДАННЫХ
+text
+Products:
+┌────┬──────────────┬──────────────┬────────┬────────────────┐
+│ id │ name         │ description  │ price  │ stock_quantity │
+├────┼──────────────┼──────────────┼────────┼────────────────┤
+│ 1  │ iPhone 15    │ Смартфон     │ 50000  │ 10             │
+│ 2  │ Футболка     │ Хлопок       │ 1000   │ 50             │
+└────┴──────────────┴──────────────┴────────┴────────────────┘
+КАК ЗАПУСТИТЬ И ТЕСТИРОВАТЬ
+Сохрани код → app.py
+
+python app.py
+
+Открой: http://localhost:5000/api/products
+
+КОМАНДЫ ДЛЯ ТЕСТИРОВАНИЯ:
+
+text
+# Список товаров
+curl http://localhost:5000/api/products
+
+# Создать
+curl -X POST -H "Content-Type: application/json" -d '{"name":"Тест","price":100}' http://localhost:5000/api/products
+
+# Получить ID=1
+curl http://localhost:5000/api/products/1
+
+# Обновить
+curl -X PUT -H "Content-Type: application/json" -d '{"name":"Обновлен","price":200}' http://localhost:5000/api/products/1
+
+# Удалить
+curl -X DELETE http://localhost:5000/api/products/1
+ДЛЯ ОТЧЕТА ПО ПРАКТИКЕ
+"Разработал RESTful API на Flask + SQLite для управления каталогом товаров.
+Реализовал 5 CRUD операций с серверной валидацией данных и обработкой ошибок.
+Применены современные практики:
+• row_factory для работы со словарями
+• HTTP статус-коды (201/400/404)
+• Параметризованные SQL-запросы (защита от инъекций)
+• Автоматическая инициализация БД
+• Безопасное закрытие соединений"
+
+═══════════════════════════════════════════════════════════════════════════════
+API ДОСТУПЕН: http://localhost:5000/api/products
+═══════════════════════════════════════════════════════════════════════════════

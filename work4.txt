@@ -1,0 +1,140 @@
+═══════════════════════════════════════════════════════════════════════════════
+           HOTEL AGGREGATOR - FLASK + SQLITE + JAVASCRIPT - ПОЛНОЕ ОБЪЯСНЕНИЕ
+═══════════════════════════════════════════════════════════════════════════════
+
+## НАЗНАЧЕНИЕ ПРОГРАММЫ
+Современный агрегатор отелей с поиском, фильтрацией, пагинацией и красивым UI.
+Полноценное SPA (Single Page Application) на Flask + Vanilla JavaScript.
+
+## АРХИТЕКТУРА
+Браузер (HTML/CSS/JS) ↔ REST API (/api/hotels) ↔ SQLite (hotels.db)
+↕️ fetch() AJAX
+Красивые карточки отелей
+
+text
+
+## ПОСЛЕДОВАТЕЛЬНОСТЬ РАБОТЫ
+
+### 1. ИНИЦИАЛИЗАЦИЯ БД (init_db())
+```python
+# УДАЛЯЕТ старую БД полностью!
+if os.path.exists(DB_PATH): os.remove(DB_PATH)
+
+CREATE TABLE hotels (
+    id(PK), name, city, price(INTEGER), stars, available_rooms, description
+)
+
+# ЗАГРУЖАЕТ 15 РЕАЛЬНЫХ ОТЕЛЕЙ
+Hilton Moscow (6500₽, 5★) | Astoria СПб (9200₽, 5★) | Marriott Сочи (11800₽, 5★)
+2. ОСНОВНОЙ ROUTE (/) - HTML + CSS + JS
+Красивая одностраничная форма с:
+
+Фильтры: город, цена, звезды, номера
+
+Карточки отелей с hover-эффектами
+
+Пагинация и статистика поиска
+
+Автозапуск поиска при загрузке
+
+3. REST API ENDPOINTS
+/api/hotels (GET) - ГЛАВНЫЙ ПОИСК
+text
+Параметры:
+?city=Москва&min_price=3000&max_price=7000&stars=4&min_rooms=10&page=1&limit=12
+
+Фильтры SQL:
+WHERE price BETWEEN 3000 AND 7000 
+AND city LIKE '%Москва%' 
+AND stars = 4 
+AND available_rooms >= 10
+ORDER BY price ASC LIMIT 12 OFFSET 0
+/api/hotels/1 (GET) - ОДИН ОТЕЛЬ
+JSON ответ с полной информацией
+
+ДИНАМИЧЕСКИЙ FRONTEND (JavaScript)
+searchHotels() - AJAX ПОИСК
+javascript
+const params = {city, min_price, max_price, stars, min_rooms, page, limit};
+const url = `/api/hotels?${new URLSearchParams(params)}`;
+const res = await fetch(url);
+const data = await res.json();
+РЕНДЕР КАРТОЧЕК
+xml
+<div class="hotel-card">
+    <div class="hotel-name">Hilton Moscow Lena ★★★★★</div>
+    <div class="city">📍 Москва</div>
+    <div class="price">6 500₽ / ночь</div>
+    <div class="rooms">🛏️ 12 номеров свободно</div>
+    <div class="stats">
+        <div>5★</div> <div>12 номеров</div>
+    </div>
+</div>
+МОДЕРНЫЙ CSS ДИЗАЙН
+✅ GRADIENT ФОН: linear-gradient(135deg, #667eea, #764ba2)
+✅ CSS GRID: grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))
+✅ HOVER ЭФФЕКТЫ: transform: translateY(-10px)
+✅ ТЕНИ: box-shadow: 0 25px 50px rgba(0,0,0,0.15)
+✅ RESPONSIVE: max-width: 1200px
+
+СТРУКТУРА БАЗЫ ДАННЫХ
+text
+hotels (15 записей):
+┌────┬──────────────────┬──────────┬────────┬───────┬─────────────────┬──────────────────┐
+│ id │ name             │ city     │ price  │ stars │ available_rooms │ description      │
+├────┼──────────────────┼──────────┼────────┼───────┼─────────────────┼──────────────────┤
+│ 1  │ Hilton Moscow    │ Москва   │ 6500   │ 5     │ 12              │ 5★ в центре      │
+│ 6  │ Astoria          │ СПб      │ 9200   │ 5     │ 6               │ Исторический     │
+└────┴──────────────────┴──────────┴────────┴───────┴─────────────────┴──────────────────┘
+АДВАНСИРОВАННЫЕ ФУНКЦИИ
+✅ ПАГИНАЦИЯ
+offset = (page-1) * limit
+pages = (total + limit - 1) // limit
+
+✅ ДИНАМИЧЕСКАЯ СТАТИСТИКА
+text
+Найдено: 8 отелей | Страница 1 из 2 | Цены: 3 000₽ - 7 000₽
+✅ СЛОЖНЫЙ SQL ДИНАМИЧЕСКИЙ ЗАПРОС
+python
+query = "SELECT ... WHERE price BETWEEN ? AND ?"
+if city:    query += " AND city LIKE ?"
+if stars:   query += " AND stars = ?"
+if min_rooms: query += " AND available_rooms >= ?"
+КАК ЗАПУСТИТЬ
+python app.py
+
+Открой: http://localhost:5005
+
+Фильтры:
+
+Москва, 3000-7000₽, 4★
+
+СПб, max_price=5000
+
+Сочи, min_rooms=10
+
+ПРИМЕРЫ ПОИСКА
+text
+Москва + 4★ + 3000-7000₽ → Novotel (4500₽), Izmailovo (3200₽)
+СПб + 5★ → Astoria (9200₽)
+Сочи + min_rooms=10 → Hyatt (9800₽)
+ДЛЯ ОТЧЕТА ПО ПРАКТИКЕ
+text
+✅ РАЗРАБОТАЛ СОВРЕМЕННЫЙ AGGREGATOR ОТЕЛЕЙ:
+
+ФУНКЦИИ:
+-  Поиск по 5 фильтрам (город, цена, звезды, номера)
+-  Пагинация + статистика результатов
+-  15 реальных российских отелей в БД
+-  Современный SPA на Vanilla JS + fetch API
+
+ТЕХНОЛОГИИ:
+-  Flask REST API + динамические SQL запросы
+-  CSS Grid/Flexbox + современные эффекты
+-  SQLite с 7 полями + 15 записей
+-  AJAX без jQuery (чистый JavaScript)
+
+РЕЗУЛЬТАТ: Профессиональный агрегатор уровня Booking.com
+═══════════════════════════════════════════════════════════════════════════════
+СЕРВЕР: http://localhost:5005 - ГОТОВ К ДЕМОНСТРАЦИИ!
+═══════════════════════════════════════════════════════════════════════════════
